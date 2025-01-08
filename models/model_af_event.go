@@ -23,4 +23,6 @@ const (
 	AfEvent_QOS_NOTIF                       AfEvent = "QOS_NOTIF"
 	AfEvent_SUCCESSFUL_RESOURCES_ALLOCATION AfEvent = "SUCCESSFUL_RESOURCES_ALLOCATION"
 	AfEvent_USAGE_REPORT                    AfEvent = "USAGE_REPORT"
+	AfEvent_ANI_REPORT                      AfEvent = "ANI_REPORT"
+	AfEvent_CHARGING_CORRELATION            AfEvent = "CHARGING_CORRELATION"
 )

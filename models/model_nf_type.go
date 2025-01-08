@@ -38,4 +38,5 @@ const (
 	NfType_BSF      NfType = "BSF"
 	NfType_CHF      NfType = "CHF"
 	NfType_NWDAF    NfType = "NWDAF"
+	NfType_PCSCF    NfType = "PCSCF"
 )
