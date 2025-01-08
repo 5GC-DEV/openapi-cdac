@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/omec-project/openapi/logger"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 )
 
 type MultipartRelatedBinding struct{}

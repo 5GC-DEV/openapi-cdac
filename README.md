@@ -3,7 +3,7 @@
 
 SPDX-License-Identifier: Apache-2.0
 -->
-[![Go Report Card](https://goreportcard.com/badge/github.com/omec-project/openapi)](https://goreportcard.com/report/github.com/omec-project/openapi)
+[![Go Report Card](https://goreportcard.com/badge/github.com/5GC-DEV/openapi-cdac)](https://goreportcard.com/report/github.com/5GC-DEV/openapi-cdac)
 
 # OpenApi
 

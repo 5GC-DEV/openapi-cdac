@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/omec-project/openapi/logger"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 )
 
 func MarshToJsonString(v interface{}) (result []string) {
