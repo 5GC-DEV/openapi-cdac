@@ -144,17 +144,24 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthEvent'
       responses:
-        204:
-          description: Upon success, an empty response body shall be returned
+        201:
+          description: Successfully created the authentication event resource.
+          headers:
+            Location:
+              description: 'Contains the URI of the newly created resource.'
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthEvent'
         default:
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
           description: Unexpected error
-      summary: To store the Authentication Status data of a UE
-      tags:
-      - Authentication Status (Document)
   /subscription-data/{ueId}/ue-update-confirmation-data/sor-data:
     get:
       operationId: QueryAuthSoR
@@ -6171,6 +6178,10 @@ components:
         servingNetworkName: servingNetworkName
         success: true
       properties:
+        authEventId:
+          type: string
+          readOnly: true
+          description: "Unique identifier for the authentication event."
         nfInstanceId:
           format: uuid
           type: string
