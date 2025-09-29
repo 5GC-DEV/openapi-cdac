@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/omec-project/openapi/Nnrf_NFDiscovery"
-	"github.com/omec-project/openapi/logger"
-	"github.com/omec-project/openapi/models"
+	"github.com/5GC-DEV/openapi-cdac/Nnrf_NFDiscovery"
+	"github.com/5GC-DEV/openapi-cdac/logger"
+	"github.com/5GC-DEV/openapi-cdac/models"
 )
 
 const (
