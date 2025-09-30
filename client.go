@@ -34,7 +34,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/omec-project/openapi/logger"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 	"golang.org/x/net/http2"
 	"golang.org/x/oauth2"
 	"gopkg.in/h2non/gock.v1"
@@ -508,7 +508,7 @@ func MultipartDeserialize(b []byte, v interface{}, boundary string) (err error) 
 	var nextPart *multipart.Part
 
 	contentIDIndex := make(map[string]int)
-
+	partIndex := 0 // keep track of which part we are reading
 	for {
 		var part *multipart.Part
 		multipartBody := make([]byte, 1000)
@@ -516,14 +516,29 @@ func MultipartDeserialize(b []byte, v interface{}, boundary string) (err error) 
 		// if no remian part, break this loop
 		if nextPart, err = r.NextPart(); err == io.EOF {
 			break
+		} else if err != nil {
+			logger.OpenapiLog.Errorf("Error getting next part: %v", err)
+			return err
+		} else if nextPart == nil {
+			logger.OpenapiLog.Errorf("Next part is nil at index %d", partIndex)
+			return errors.New("next part is nil")
+		} else if nextPart.Header == nil {
+			logger.OpenapiLog.Errorf("Part header is nil at index %d", partIndex)
+			return errors.New("part header is nil")
 		} else {
 			part = nextPart
 		}
 
+		partIndex++
+		logger.OpenapiLog.Infof("Processing part %d with headers: %v", partIndex, part.Header)
 		contentType := part.Header.Get("Content-Type")
+		if contentType == "" {
+			logger.OpenapiLog.Errorf("Content-Type missing for part %d", partIndex)
+		}
 		var n int
 		n, err = part.Read(multipartBody)
 		if err == nil {
+			logger.OpenapiLog.Errorf("Error getting next part: %v", err)
 			return err
 		}
 		multipartBody = multipartBody[:n]
@@ -556,6 +571,7 @@ func MultipartDeserialize(b []byte, v interface{}, boundary string) (err error) 
 				value := val.Field(index)
 				value.SetBytes(multipartBody)
 			} else {
+				logger.OpenapiLog.Errorf("Multipart binary data needs Content-ID but missing at part %d", partIndex)
 				return fmt.Errorf("multipart binary data need Content-ID")
 			}
 		}

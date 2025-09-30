@@ -22,8 +22,8 @@ import (
 
 	"github.com/antihax/optional"
 
-	"github.com/omec-project/openapi"
-	"github.com/omec-project/openapi/models"
+	"github.com/5GC-DEV/openapi-cdac"
+	"github.com/5GC-DEV/openapi-cdac/models"
 )
 
 // Linger please
