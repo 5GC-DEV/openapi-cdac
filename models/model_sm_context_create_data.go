@@ -20,7 +20,7 @@ type SmContextCreateData struct {
 	Gpsi                    string                    `json:"gpsi,omitempty"`
 	PduSessionId            int32                     `json:"pduSessionId,omitempty"`
 	Dnn                     string                    `json:"dnn,omitempty"`
-	SNssai                  *Snssai                   `json:"sNssai,omitempty"`
+	SNssai                  *[]Snssai                 `json:"sNssai,omitempty"`
 	HplmnSnssai             *Snssai                   `json:"hplmnSnssai,omitempty"`
 	ServingNfId             string                    `json:"servingNfId"`
 	Guami                   *Guami                    `json:"guami,omitempty"`
