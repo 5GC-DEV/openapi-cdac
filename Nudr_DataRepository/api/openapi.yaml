@@ -584,7 +584,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Amf3GppAccessRegistration'
       responses:
-        '201':
+        201:
           description: Created
           headers:
             Location:
