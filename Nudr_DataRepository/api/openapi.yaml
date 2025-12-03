@@ -584,6 +584,18 @@ paths:
             schema:
               $ref: '#/components/schemas/Amf3GppAccessRegistration'
       responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: 'Contains the URI of the newly created resource'
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amf3GppAccessRegistration'
         204:
           description: Upon success, an empty response body shall be returned
         default:
