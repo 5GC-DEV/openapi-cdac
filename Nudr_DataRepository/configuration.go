@@ -29,7 +29,7 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
-		basePath:      "https://example.com/nudr-dr/v1",
+		basePath:      "https://example.com/nudr-dr/v2",
 		url:           "{apiRoot}/nudr-dr/v1",
 		defaultHeader: make(map[string]string),
 		userAgent:     "OpenAPI-Generator/1.0.0/go",
