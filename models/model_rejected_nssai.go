@@ -9,6 +9,6 @@
 package models
 
 type RejectedSnssai struct {
-	Snssai      *Snssai     `json:"snssai"`
-	RejectCause RejectCause `json:"rejectCause,omitempty"`
+	RejectedSnssai *Snssai     `json:"snssai"`
+	RejectCause    RejectCause `json:"rejectCause,omitempty"`
 }
