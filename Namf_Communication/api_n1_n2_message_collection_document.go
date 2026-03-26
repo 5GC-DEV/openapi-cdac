@@ -63,8 +63,20 @@ func (a *N1N2MessageCollectionDocumentApiService) N1N2MessageTransfer(ctx contex
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath() + "/ue-contexts/{ueContextId}/n1-n2-messages"
-	localVarPath = strings.Replace(localVarPath, "{"+"ueContextId"+"}", fmt.Sprintf("%v", ueContextId), -1)
+	// localVarPath := a.client.cfg.BasePath() + "/ue-contexts/{ueContextId}/n1-n2-messages"
+	// localVarPath = strings.Replace(localVarPath, "{"+"ueContextId"+"}", fmt.Sprintf("%v", ueContextId), -1)
+
+	basePath := a.client.cfg.BasePath()
+
+	// Ensure scheme exists
+	if !strings.HasPrefix(basePath, "http://") && !strings.HasPrefix(basePath, "https://") {
+		basePath = "http://" + basePath
+		a.client.cfg.SetBasePath(basePath)
+	}
+
+	// Create path
+	localVarPath := basePath + "/ue-contexts/{ueContextId}/n1-n2-messages"
+	localVarPath = strings.Replace(localVarPath, "{ueContextId}", fmt.Sprintf("%v", ueContextId), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
