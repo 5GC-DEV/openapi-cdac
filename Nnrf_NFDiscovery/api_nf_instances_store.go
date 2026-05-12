@@ -15,6 +15,7 @@ package Nnrf_NFDiscovery
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -112,6 +113,7 @@ type SearchNFInstancesParamOpts struct {
 }
 
 func (a *NFInstancesStoreApiService) SearchNFInstances(ctx context.Context, targetNfType models.NfType, requesterNfType models.NfType, localVarOptionals *SearchNFInstancesParamOpts) (models.SearchResult, *http.Response, error) {
+	fmt.Print("---In SearchNFInstances()")
 	var (
 		localVarHTTPMethod   = strings.ToUpper("Get")
 		localVarPostBody     interface{}
@@ -246,10 +248,20 @@ func (a *NFInstancesStoreApiService) SearchNFInstances(ctx context.Context, targ
 
 	r, err := openapi.PrepareRequest(ctx, a.client.cfg, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
+		fmt.Printf("---PrepareRequest failed: %+v", err)
 		return localVarReturnValue, nil, err
 	}
 
+	fmt.Printf("---Sending NRF request: method=%s url=%s", r.Method, r.URL.String())
+
 	localVarHTTPResponse, err := openapi.CallAPI(a.client.cfg, r)
+	if err != nil {
+		fmt.Printf("NRF request failed: method=%s url=%s err=%+v", r.Method, r.URL.String(), err)
+	}
+
+	if localVarHTTPResponse != nil {
+		fmt.Printf("NRF response received: status=%d url=%s", localVarHTTPResponse.StatusCode, r.URL.String())
+	}
 	if err != nil || localVarHTTPResponse == nil {
 		return localVarReturnValue, localVarHTTPResponse, err
 	}
