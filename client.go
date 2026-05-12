@@ -130,13 +130,66 @@ func ParameterToString(obj interface{}, collectionFormat string) string {
 
 // callAPI do the request.
 func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
-	if request.URL.Scheme == "https" {
-		return innerHTTP2Client.Do(request)
-	} else if request.URL.Scheme == "http" {
-		return innerHTTP2CleartextClient.Do(request)
+	logger.OpenapiLog.Debugln("[CallAPI] Enter")
+
+	if request == nil {
+		logger.OpenapiLog.Errorln("[CallAPI] Request is nil")
+		return nil, fmt.Errorf("nil request")
 	}
 
-	return nil, fmt.Errorf("unsupported scheme[%s]", request.URL.Scheme)
+	logger.OpenapiLog.Debugf("[CallAPI] Method: %s", request.Method)
+	logger.OpenapiLog.Debugf("[CallAPI] URL: %s", request.URL.String())
+	logger.OpenapiLog.Debugf("[CallAPI] Scheme: %s", request.URL.Scheme)
+	logger.OpenapiLog.Debugf("[CallAPI] Host: %s", request.URL.Host)
+	logger.OpenapiLog.Debugf("[CallAPI] Path: %s", request.URL.Path)
+
+	for key, value := range request.Header {
+		logger.OpenapiLog.Debugf("[CallAPI] Header %s: %v", key, value)
+	}
+
+	var (
+		resp *http.Response
+		err  error
+	)
+
+	if request.URL.Scheme == "https" {
+		logger.OpenapiLog.Debugln("[CallAPI] Using HTTPS client")
+
+		resp, err = innerHTTP2Client.Do(request)
+
+	} else if request.URL.Scheme == "http" {
+		logger.OpenapiLog.Debugln("[CallAPI] Using HTTP cleartext client")
+
+		resp, err = innerHTTP2CleartextClient.Do(request)
+
+	} else {
+		logger.OpenapiLog.Errorf("[CallAPI] Unsupported scheme: %s",
+			request.URL.Scheme)
+
+		return nil, fmt.Errorf("unsupported scheme[%s]",
+			request.URL.Scheme)
+	}
+
+	if err != nil {
+		logger.OpenapiLog.Errorf("[CallAPI] HTTP request failed: %v", err)
+		return resp, err
+	}
+
+	if resp == nil {
+		logger.OpenapiLog.Errorln("[CallAPI] Received nil HTTP response")
+		return nil, fmt.Errorf("nil http response")
+	}
+
+	logger.OpenapiLog.Debugf("[CallAPI] Response Status: %s", resp.Status)
+	logger.OpenapiLog.Debugf("[CallAPI] Response Status Code: %d", resp.StatusCode)
+
+	for key, value := range resp.Header {
+		logger.OpenapiLog.Debugf("[CallAPI] Response Header %s: %v", key, value)
+	}
+
+	logger.OpenapiLog.Debugln("[CallAPI] Exit")
+
+	return resp, nil
 }
 
 // // Change base path to allow switching to mocks
@@ -581,40 +634,84 @@ func MultipartDeserialize(b []byte, v interface{}, boundary string) (err error) 
 }
 
 func Deserialize(v interface{}, b []byte, contentType string) (err error) {
+	logger.OpenapiLog.Debugf("[Deserialize] Enter contentType=%s targetType=%T bodyLen=%d",
+		contentType, v, len(b))
+
 	if s, ok := v.(*string); ok {
+		logger.OpenapiLog.Debugln("[Deserialize] Target type is string")
 		*s = string(b)
+
+		logger.OpenapiLog.Debugf("[Deserialize] String body: %s", *s)
 		return nil
 	}
 
-	switch KindOfMediaType(contentType) {
+	mediaType := KindOfMediaType(contentType)
+
+	logger.OpenapiLog.Debugf("[Deserialize] Detected media type: %v", mediaType)
+
+	switch mediaType {
+
 	case MediaKindJSON:
+		logger.OpenapiLog.Debugln("[Deserialize] Processing JSON response")
+		logger.OpenapiLog.Debugf("[Deserialize] Raw JSON Body: %s", string(b))
+
 		if err = json.Unmarshal(b, v); err != nil {
+			logger.OpenapiLog.Errorf("[Deserialize] JSON unmarshal failed: %v", err)
 			return err
 		}
+
+		logger.OpenapiLog.Debugf("[Deserialize] JSON unmarshal success: %+v", v)
 		return nil
+
 	case MediaKindXML:
+		logger.OpenapiLog.Debugln("[Deserialize] Processing XML response")
+		logger.OpenapiLog.Debugf("[Deserialize] Raw XML Body: %s", string(b))
+
 		if err = xml.Unmarshal(b, v); err != nil {
+			logger.OpenapiLog.Errorf("[Deserialize] XML unmarshal failed: %v", err)
 			return err
 		}
+
+		logger.OpenapiLog.Debugf("[Deserialize] XML unmarshal success: %+v", v)
 		return nil
+
 	case MediaKindMultipartRelated:
+		logger.OpenapiLog.Debugln("[Deserialize] Processing multipart/related response")
+
 		boundary := ""
+
 		for _, part := range strings.Split(contentType, ";") {
+			logger.OpenapiLog.Debugf("[Deserialize] Multipart content-type part: %s", part)
+
 			if strings.HasPrefix(part, " boundary=") {
 				boundary = part[10:]
 			}
 		}
+
 		if boundary == "" {
+			logger.OpenapiLog.Errorln("[Deserialize] multipart/related missing boundary")
 			return errors.New("multipart/related need boundary")
 		}
+
 		boundary = strings.Trim(boundary, "\" ")
+
+		logger.OpenapiLog.Debugf("[Deserialize] Multipart boundary: %s", boundary)
+
 		if err = MultipartDeserialize(b, v, boundary); err != nil {
+			logger.OpenapiLog.Errorf("[Deserialize] MultipartDeserialize failed: %v", err)
 			return err
 		}
+
+		logger.OpenapiLog.Debugf("[Deserialize] Multipart deserialize success: %+v", v)
+
 		return nil
+
 	case MediaKindUnsupported:
+		logger.OpenapiLog.Errorf("[Deserialize] Unsupported media type: %s", contentType)
 		return errors.New("undefined response type")
+
 	default:
+		logger.OpenapiLog.Errorf("[Deserialize] Unknown media type: %s", contentType)
 		return errors.New("undefined response type")
 	}
 }
