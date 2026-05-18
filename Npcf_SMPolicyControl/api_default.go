@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/5GC-DEV/openapi-cdac"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 	"github.com/5GC-DEV/openapi-cdac/models"
 )
 
@@ -49,8 +50,14 @@ func (a *DefaultApiService) SmPoliciesPost(ctx context.Context, smPolicyContextD
 		localVarReturnValue  models.SmPolicyDecision
 	)
 
+	logger.OpenapiLog.Debugln("[PCF] Enter SmPoliciesPost")
+
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath() + "/sm-policies"
+
+	logger.OpenapiLog.Debugf("[PCF] Request URL: %s", localVarPath)
+	logger.OpenapiLog.Debugf("[PCF] HTTP Method: %s", localVarHTTPMethod)
+	logger.OpenapiLog.Debugf("[PCF] SmPolicyContextData: %+v", smPolicyContextData)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -58,7 +65,7 @@ func (a *DefaultApiService) SmPoliciesPost(ctx context.Context, smPolicyContextD
 
 	localVarHTTPContentTypes := []string{"application/json"}
 
-	localVarHeaderParams["Content-Type"] = localVarHTTPContentTypes[0] // use the first content type specified in 'consumes'
+	localVarHeaderParams["Content-Type"] = localVarHTTPContentTypes[0]
 
 	// to determine the Accept header
 	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json"}
@@ -69,24 +76,55 @@ func (a *DefaultApiService) SmPoliciesPost(ctx context.Context, smPolicyContextD
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 
+	logger.OpenapiLog.Debugf("[PCF] Request Headers: %+v", localVarHeaderParams)
+
 	// body params
 	localVarPostBody = &smPolicyContextData
 
-	r, err := openapi.PrepareRequest(ctx, a.client.cfg, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	logger.OpenapiLog.Debugln("[PCF] Preparing HTTP request")
+
+	r, err := openapi.PrepareRequest(
+		ctx,
+		a.client.cfg,
+		localVarPath,
+		localVarHTTPMethod,
+		localVarPostBody,
+		localVarHeaderParams,
+		localVarQueryParams,
+		localVarFormParams,
+		localVarFormFileName,
+		localVarFileName,
+		localVarFileBytes,
+	)
 	if err != nil {
+		logger.OpenapiLog.Errorf("[PCF] PrepareRequest failed: %v", err)
 		return localVarReturnValue, nil, err
 	}
 
+	logger.OpenapiLog.Debugln("[PCF] Sending HTTP request to PCF")
+
 	localVarHTTPResponse, err := openapi.CallAPI(a.client.cfg, r)
-	if err != nil || localVarHTTPResponse == nil {
+	if err != nil {
+		logger.OpenapiLog.Errorf("[PCF] CallAPI failed: %v", err)
 		return localVarReturnValue, localVarHTTPResponse, err
 	}
+
+	if localVarHTTPResponse == nil {
+		logger.OpenapiLog.Errorln("[PCF] CallAPI returned nil HTTP response")
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	logger.OpenapiLog.Debugf("[PCF] Received HTTP Response Status: %s",
+		localVarHTTPResponse.Status)
 
 	localVarBody, err := ioutil.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	if err != nil {
+		logger.OpenapiLog.Errorf("[PCF] Failed to read response body: %v", err)
 		return localVarReturnValue, localVarHTTPResponse, err
 	}
+
+	logger.OpenapiLog.Debugf("[PCF] Response Body: %s", string(localVarBody))
 
 	apiError := openapi.GenericOpenAPIError{
 		RawBody:     localVarBody,
@@ -94,96 +132,55 @@ func (a *DefaultApiService) SmPoliciesPost(ctx context.Context, smPolicyContextD
 	}
 
 	switch localVarHTTPResponse.StatusCode {
+
 	case 201:
-		err = openapi.Deserialize(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		logger.OpenapiLog.Debugln("[PCF] SM Policy created successfully")
+
+		err = openapi.Deserialize(
+			&localVarReturnValue,
+			localVarBody,
+			localVarHTTPResponse.Header.Get("Content-Type"),
+		)
 		if err != nil {
+			logger.OpenapiLog.Errorf("[PCF] Deserialize success response failed: %v", err)
 			apiError.ErrorStatus = err.Error()
 		}
+
+		logger.OpenapiLog.Debugf("[PCF] SM Policy Decision: %+v", localVarReturnValue)
+
 		return localVarReturnValue, localVarHTTPResponse, nil
-	case 400:
+
+	case 400, 401, 403, 411, 413, 415, 429, 500, 503:
+		logger.OpenapiLog.Errorf("[PCF] HTTP Error Response Code: %d",
+			localVarHTTPResponse.StatusCode)
+
 		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+
+		err = openapi.Deserialize(
+			&v,
+			localVarBody,
+			localVarHTTPResponse.Header.Get("Content-Type"),
+		)
 		if err != nil {
+			logger.OpenapiLog.Errorf("[PCF] Deserialize problem details failed: %v", err)
 			apiError.ErrorStatus = err.Error()
 			return localVarReturnValue, localVarHTTPResponse, apiError
 		}
+
+		logger.OpenapiLog.Errorf("[PCF] Problem Details: %+v", v)
+
 		apiError.ErrorModel = v
+
 		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 401:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 403:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
+
 	case 404:
+		logger.OpenapiLog.Warnln("[PCF] Resource not found (404)")
 		return localVarReturnValue, localVarHTTPResponse, nil
-	case 411:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 413:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 415:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 429:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 500:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
-	case 503:
-		var v models.ProblemDetails
-		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			apiError.ErrorStatus = err.Error()
-			return localVarReturnValue, localVarHTTPResponse, apiError
-		}
-		apiError.ErrorModel = v
-		return localVarReturnValue, localVarHTTPResponse, apiError
+
 	default:
+		logger.OpenapiLog.Warnf("[PCF] Unexpected HTTP Status Code: %d",
+			localVarHTTPResponse.StatusCode)
+
 		return localVarReturnValue, localVarHTTPResponse, nil
 	}
 }
