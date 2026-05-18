@@ -130,25 +130,13 @@ func ParameterToString(obj interface{}, collectionFormat string) string {
 
 // callAPI do the request.
 func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
-	var (
-		resp *http.Response
-		err  error
-	)
 	if request.URL.Scheme == "https" {
-		fmt.Print("[CallAPI] using https")
-		resp, err = innerHTTP2Client.Do(request)
+		return innerHTTP2Client.Do(request)
 	} else if request.URL.Scheme == "http" {
-		fmt.Print("[CallAPI] using http")
-		resp, err = innerHTTP2CleartextClient.Do(request)
-	} else {
-		return nil, fmt.Errorf("unsupported scheme[%s]", request.URL.Scheme)
+		return innerHTTP2CleartextClient.Do(request)
 	}
-	if err != nil {
-		fmt.Printf("[CallAPI] FAILED err=%+v url=%s", err, request.URL.String())
-		return resp, err
-	}
-	fmt.Printf("[CallAPI] SUCCESS status=%d url=%s", resp.StatusCode, request.URL.String())
-	return resp, err
+
+	return nil, fmt.Errorf("unsupported scheme[%s]", request.URL.Scheme)
 }
 
 // // Change base path to allow switching to mocks
