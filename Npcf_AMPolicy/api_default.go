@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/5GC-DEV/openapi-cdac"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 	"github.com/5GC-DEV/openapi-cdac/models"
 )
 
@@ -469,6 +470,7 @@ DefaultApiService
 */
 
 func (a *DefaultApiService) PoliciesPost(ctx context.Context, policyAssociationRequest models.PolicyAssociationRequest) (models.PolicyAssociation, *http.Response, error) {
+	logger.OpenapiLog.Debugln("Entering PoliciesPost")
 	var (
 		localVarHTTPMethod   = strings.ToUpper("Post")
 		localVarPostBody     interface{}
@@ -503,14 +505,22 @@ func (a *DefaultApiService) PoliciesPost(ctx context.Context, policyAssociationR
 
 	r, err := openapi.PrepareRequest(ctx, a.client.cfg, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
+		fmt.Printf("PrepareRequest failed: %+v", err)
 		return localVarReturnValue, nil, err
 	}
 
-	localVarHTTPResponse, err := openapi.CallAPI(a.client.cfg, r)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
+	fmt.Printf("Sending PCF request: method=%s url=%s", r.Method, r.URL.String())
 
+	localVarHTTPResponse, err := openapi.CallAPI(a.client.cfg, r)
+	// if err != nil || localVarHTTPResponse == nil {
+	// 	return localVarReturnValue, localVarHTTPResponse, err
+	// }
+	if err != nil {
+		fmt.Printf("PCF request failed: method=%s url=%s err=%+v", r.Method, r.URL.String(), err)
+	}
+	if localVarHTTPResponse != nil {
+		fmt.Printf("PCF response received: status=%d url=%s", localVarHTTPResponse.StatusCode, r.URL.String())
+	}
 	localVarBody, err := ioutil.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	if err != nil {
