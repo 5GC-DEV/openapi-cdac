@@ -24,6 +24,7 @@ import (
 	"github.com/antihax/optional"
 
 	"github.com/5GC-DEV/openapi-cdac"
+	"github.com/5GC-DEV/openapi-cdac/logger"
 	"github.com/5GC-DEV/openapi-cdac/models"
 )
 
@@ -4521,19 +4522,48 @@ func (a *DefaultApiService) PolicyDataUesUeIdSmDataGet(ctx context.Context, ueId
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 
+	logger.OpenapiLog.Debugf(
+		"PolicyDataUesUeIdSmDataGet Request: ueId=%s path=%s query=%v",
+		ueId,
+		localVarPath,
+		localVarQueryParams.Encode(),
+	)
+
 	r, err := openapi.PrepareRequest(ctx, a.client.cfg, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
+		logger.OpenapiLog.Errorf(
+			"PrepareRequest failed ueId=%s err=%v",
+			ueId,
+			err,
+		)
 		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := openapi.CallAPI(a.client.cfg, r)
 	if err != nil || localVarHTTPResponse == nil {
+		logger.OpenapiLog.Errorf(
+			"CallAPI failed ueId=%s err=%v rsp=%v",
+			ueId,
+			err,
+			localVarHTTPResponse,
+		)
 		return localVarReturnValue, localVarHTTPResponse, err
 	}
+
+	logger.OpenapiLog.Errorf(
+		"UDR Response: status=%d %s",
+		localVarHTTPResponse.StatusCode,
+		localVarHTTPResponse.Status,
+	)
 
 	localVarBody, err := ioutil.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	if err != nil {
+		logger.OpenapiLog.Errorf(
+			"Read body failed ueId=%s err=%v",
+			ueId,
+			err,
+		)
 		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
@@ -4542,20 +4572,49 @@ func (a *DefaultApiService) PolicyDataUesUeIdSmDataGet(ctx context.Context, ueId
 		ErrorStatus: localVarHTTPResponse.Status,
 	}
 
+	logger.OpenapiLog.Infof(
+		"UDR Raw Body UE=%s body=%s",
+		ueId,
+		string(localVarBody),
+	)
+
 	switch localVarHTTPResponse.StatusCode {
 	case 200:
 		err = openapi.Deserialize(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 		if err != nil {
+			logger.OpenapiLog.Errorf(
+				"Deserialize failed ueId=%s err=%v",
+				ueId,
+				err,
+			)
 			apiError.ErrorStatus = err.Error()
 		}
+		logger.OpenapiLog.Errorf(
+			"Decoded SmPolicyData UE=%s data=%+v",
+			ueId,
+			localVarReturnValue,
+		)
 		return localVarReturnValue, localVarHTTPResponse, nil
 	case 400:
 		var v models.ProblemDetails
+		logger.OpenapiLog.Errorf(
+			"UDR returned 400 Bad Request, body=%s",
+			string(localVarBody),
+		)
 		err = openapi.Deserialize(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 		if err != nil {
+			logger.OpenapiLog.Errorf(
+				"Failed to deserialize 400 response: err=%v body=%s",
+				err,
+				string(localVarBody),
+			)
 			apiError.ErrorStatus = err.Error()
 			return localVarReturnValue, localVarHTTPResponse, apiError
 		}
+		logger.OpenapiLog.Errorf(
+			"UDR 400 ProblemDetails: %+v",
+			v,
+		)
 		apiError.ErrorModel = v
 		return localVarReturnValue, localVarHTTPResponse, apiError
 	case 401:
