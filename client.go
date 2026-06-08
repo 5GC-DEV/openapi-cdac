@@ -52,8 +52,27 @@ var (
 	innerHTTP2CleartextClient = &http.Client{
 		Transport: &http2.Transport{
 			AllowHTTP: true,
-			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+			/*DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
 				return net.Dial(network, addr)
+			},*/
+			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				logger.OpenapiLog.Infof(
+					"[HTTP2] Dial network=%s addr=%s",
+					network,
+					addr,
+				)
+
+				conn, err := net.Dial(network, addr)
+
+				if err != nil {
+					logger.OpenapiLog.Errorf(
+						"[HTTP2] Dial failed addr=%s err=%v",
+						addr,
+						err,
+					)
+				}
+
+				return conn, err
 			},
 		},
 	}
@@ -129,7 +148,7 @@ func ParameterToString(obj interface{}, collectionFormat string) string {
 }
 
 // callAPI do the request.
-func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
+/*func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 	logger.OpenapiLog.Debugln("[CallAPI] Enter")
 
 	if request == nil {
@@ -157,8 +176,37 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 
 		resp, err = innerHTTP2Client.Do(request)
 
+		if err != nil {
+			logger.OpenapiLog.Errorf("err type=%T err=%v", err, err)
+
+			if ue, ok := err.(*url.Error); ok {
+				logger.OpenapiLog.Errorf(
+					"url.Error Op=%s URL=%s InnerType=%T InnerErr=%v",
+					ue.Op,
+					ue.URL,
+					ue.Err,
+					ue.Err,
+				)
+			}
+		}
+
 	} else if request.URL.Scheme == "http" {
 		logger.OpenapiLog.Debugln("[CallAPI] Using HTTP cleartext client")
+		resp, err = innerHTTP2CleartextClient.Do(request)
+
+		if err != nil {
+			logger.OpenapiLog.Errorf("err type=%T err=%v", err, err)
+
+			if ue, ok := err.(*url.Error); ok {
+				logger.OpenapiLog.Errorf(
+					"url.Error Op=%s URL=%s InnerType=%T InnerErr=%v",
+					ue.Op,
+					ue.URL,
+					ue.Err,
+					ue.Err,
+				)
+			}
+		}
 
 		resp, err = innerHTTP2CleartextClient.Do(request)
 
@@ -185,6 +233,160 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 
 	for key, value := range resp.Header {
 		logger.OpenapiLog.Debugf("[CallAPI] Response Header %s: %v", key, value)
+	}
+
+	logger.OpenapiLog.Debugln("[CallAPI] Exit")
+
+	return resp, nil
+}*/
+
+func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
+	logger.OpenapiLog.Debugln("[CallAPI] Enter")
+
+	if request == nil {
+		logger.OpenapiLog.Errorln("[CallAPI] Request is nil")
+		return nil, fmt.Errorf("nil request")
+	}
+
+	logger.OpenapiLog.Debugf("[CallAPI] Method: %s", request.Method)
+	logger.OpenapiLog.Debugf("[CallAPI] URL: %s", request.URL.String())
+	logger.OpenapiLog.Debugf("[CallAPI] Scheme: %s", request.URL.Scheme)
+	logger.OpenapiLog.Debugf("[CallAPI] Host: %s", request.URL.Host)
+	logger.OpenapiLog.Debugf("[CallAPI] Path: %s", request.URL.Path)
+
+	for key, value := range request.Header {
+		logger.OpenapiLog.Debugf("[CallAPI] Header %s: %v", key, value)
+	}
+
+	var (
+		resp       *http.Response
+		err        error
+		httpClient *http.Client
+	)
+
+	const maxRetries = 3
+
+	switch request.URL.Scheme {
+
+	case "https":
+		logger.OpenapiLog.Debugln("[CallAPI] Using HTTPS client")
+		httpClient = innerHTTP2Client
+
+	case "http":
+		logger.OpenapiLog.Debugln("[CallAPI] Using HTTP cleartext client")
+		httpClient = innerHTTP2CleartextClient
+
+	default:
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] Unsupported scheme: %s",
+			request.URL.Scheme,
+		)
+
+		return nil, fmt.Errorf(
+			"unsupported scheme[%s]",
+			request.URL.Scheme,
+		)
+	}
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+
+		resp, err = httpClient.Do(request)
+
+		if err == nil {
+			break
+		}
+
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] attempt=%d/%d failed errType=%T err=%v",
+			attempt,
+			maxRetries,
+			err,
+			err,
+		)
+
+		if ue, ok := err.(*url.Error); ok {
+
+			logger.OpenapiLog.Errorf(
+				"[CallAPI] url.Error Op=%s URL=%s InnerType=%T InnerErr=%v",
+				ue.Op,
+				ue.URL,
+				ue.Err,
+				ue.Err,
+			)
+
+			if unwrapped := errors.Unwrap(ue.Err); unwrapped != nil {
+
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] UnwrappedType=%T UnwrappedErr=%v",
+					unwrapped,
+					unwrapped,
+				)
+			}
+		}
+
+		// Retry only idempotent methods
+		switch request.Method {
+
+		case http.MethodGet,
+			http.MethodHead,
+			http.MethodPut,
+			http.MethodDelete:
+
+		default:
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Not retrying non-idempotent method=%s",
+				request.Method,
+			)
+
+			return resp, err
+		}
+
+		if attempt < maxRetries {
+
+			backoff := time.Duration(attempt*100) * time.Millisecond
+
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Retrying after %v",
+				backoff,
+			)
+
+			time.Sleep(backoff)
+		}
+	}
+
+	if err != nil {
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] HTTP request failed after retries: %v",
+			err,
+		)
+
+		return resp, err
+	}
+
+	if resp == nil {
+		logger.OpenapiLog.Errorln(
+			"[CallAPI] Received nil HTTP response",
+		)
+
+		return nil, fmt.Errorf("nil http response")
+	}
+
+	logger.OpenapiLog.Debugf(
+		"[CallAPI] Response Status: %s",
+		resp.Status,
+	)
+
+	logger.OpenapiLog.Debugf(
+		"[CallAPI] Response Status Code: %d",
+		resp.StatusCode,
+	)
+
+	for key, value := range resp.Header {
+		logger.OpenapiLog.Debugf(
+			"[CallAPI] Response Header %s: %v",
+			key,
+			value,
+		)
 	}
 
 	logger.OpenapiLog.Debugln("[CallAPI] Exit")
