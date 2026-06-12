@@ -846,8 +846,17 @@ func Deserialize(v interface{}, b []byte, contentType string) (err error) {
 		logger.OpenapiLog.Debugf("[Deserialize] String body: %s", *s)
 		return nil
 	}
-
+	logger.OpenapiLog.Errorf(
+		"[Deserialize] contentType='%s' bodyLen=%d body='%s'",
+		contentType,
+		len(b),
+		string(b),
+	)
 	mediaType := KindOfMediaType(contentType)
+	logger.OpenapiLog.Errorf(
+		"[Deserialize] mediaType=%v",
+		mediaType,
+	)
 
 	logger.OpenapiLog.Debugf("[Deserialize] Detected media type: %v", mediaType)
 
