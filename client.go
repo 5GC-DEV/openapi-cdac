@@ -288,7 +288,34 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 		)
 	}
 
+	if deadline, ok := request.Context().Deadline(); ok {
+		logger.OpenapiLog.Infof(
+			"[CallAPI] Initial Context Deadline=%v Remaining=%v",
+			deadline,
+			time.Until(deadline),
+		)
+	} else {
+		logger.OpenapiLog.Infof(
+			"[CallAPI] Request has no context deadline",
+		)
+	}
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+
+		if deadline, ok := request.Context().Deadline(); ok {
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Attempt=%d Method=%s RemainingContext=%v Deadline=%v",
+				attempt,
+				request.Method,
+				time.Until(deadline),
+				deadline,
+			)
+		}
+
+		logger.OpenapiLog.Infof(
+			"[CallAPI] HTTP Client Timeout=%v",
+			httpClient.Timeout,
+		)
 
 		resp, err = httpClient.Do(request)
 
@@ -304,6 +331,16 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 			err,
 		)
 
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] errors.Is(context.DeadlineExceeded)=%v",
+			errors.Is(err, context.DeadlineExceeded),
+		)
+
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] errors.Is(context.Canceled)=%v",
+			errors.Is(err, context.Canceled),
+		)
+
 		if ue, ok := err.(*url.Error); ok {
 
 			logger.OpenapiLog.Errorf(
@@ -314,8 +351,19 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 				ue.Err,
 			)
 
-			if unwrapped := errors.Unwrap(ue.Err); unwrapped != nil {
+			if errors.Is(ue.Err, context.DeadlineExceeded) {
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] Request context deadline exceeded",
+				)
+			}
 
+			if errors.Is(ue.Err, context.Canceled) {
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] Request context cancelled",
+				)
+			}
+
+			if unwrapped := errors.Unwrap(ue.Err); unwrapped != nil {
 				logger.OpenapiLog.Errorf(
 					"[CallAPI] UnwrappedType=%T UnwrappedErr=%v",
 					unwrapped,
