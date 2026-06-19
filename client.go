@@ -1208,6 +1208,14 @@ func shouldRetry(method string, err error) bool {
 		if strings.Contains(errStr, "GOAWAY") {
 			return true
 		}
+
+		if strings.Contains(errStr, "client conn could not be established") {
+			logger.OpenapiLog.Warn(
+				"[CallAPI] Retrying POST due to connection establishment failure",
+			)
+			return true
+		}
+
 	}
 
 	return false
