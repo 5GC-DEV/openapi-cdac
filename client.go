@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/5GC-DEV/openapi-cdac/logger"
+	"github.com/google/uuid"
 	"golang.org/x/net/http2"
 	"golang.org/x/oauth2"
 	"gopkg.in/h2non/gock.v1"
@@ -300,6 +301,37 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 		)
 	}
 
+	var idempotencyKey string
+
+	if isNonIdempotent(request.Method) {
+
+		requestInfo := request.Header.Get("3gpp-Sbi-Request-Info")
+
+		if requestInfo == "" {
+
+			idempotencyKey = uuid.NewString()
+
+			request.Header.Set(
+				"3gpp-Sbi-Request-Info",
+				fmt.Sprintf("idempotency-key=%s", idempotencyKey),
+			)
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Generated IdempotencyKey=%s",
+				idempotencyKey,
+			)
+
+		} else {
+
+			idempotencyKey = requestInfo
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Existing 3gpp-Sbi-Request-Info=%s",
+				requestInfo,
+			)
+		}
+	}
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 
 		if deadline, ok := request.Context().Deadline(); ok {
@@ -316,6 +348,25 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 			"[CallAPI] HTTP Client Timeout=%v",
 			httpClient.Timeout,
 		)
+
+		if attempt > 1 &&
+			isNonIdempotent(request.Method) &&
+			idempotencyKey != "" {
+
+			request.Header.Set(
+				"3gpp-Sbi-Request-Info",
+				fmt.Sprintf(
+					"retrans=true; idempotency-key=%s",
+					idempotencyKey,
+				),
+			)
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Retry attempt=%d with SBI Request Info=%s",
+				attempt,
+				request.Header.Get("3gpp-Sbi-Request-Info"),
+			)
+		}
 
 		resp, err = httpClient.Do(request)
 
@@ -373,7 +424,7 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 		}
 
 		// Retry only idempotent methods
-		switch request.Method {
+		/*switch request.Method {
 
 		case http.MethodGet,
 			http.MethodHead,
@@ -390,6 +441,30 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 		}
 
 		if attempt < maxRetries {
+
+			backoff := time.Duration(attempt*100) * time.Millisecond
+
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Retrying after %v",
+				backoff,
+			)
+
+			time.Sleep(backoff)
+		}*/
+		if !shouldRetry(request.Method, err) {
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Retry not allowed method=%s err=%v",
+				request.Method,
+				err,
+			)
+
+			return resp, err
+		}
+		if attempt < maxRetries {
+
+			if request.GetBody != nil {
+				request.Body, _ = request.GetBody()
+			}
 
 			backoff := time.Duration(attempt*100) * time.Millisecond
 
@@ -1105,4 +1180,45 @@ func InterceptH2CClient() {
 
 func RestoreH2CClient() {
 	gock.RestoreClient(innerHTTP2CleartextClient)
+}
+
+func shouldRetry(method string, err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Idempotent methods
+	switch method {
+	case http.MethodGet,
+		http.MethodHead,
+		http.MethodPut,
+		http.MethodDelete:
+		return true
+	}
+
+	// Non-idempotent POST
+	if method == http.MethodPost {
+		errStr := err.Error()
+
+		// RFC7540 / 3GPP TS 29.500 allowed retry cases
+		if strings.Contains(errStr, "REFUSED_STREAM") {
+			return true
+		}
+
+		if strings.Contains(errStr, "GOAWAY") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isNonIdempotent(method string) bool {
+	switch method {
+	case http.MethodPost,
+		http.MethodPatch:
+		return true
+	default:
+		return false
+	}
 }
