@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // E2eDataVolTransTimeCriterion Represents the ordering criterion for the list of E2E data volume transfer time.   Possible values are:     - TIME_SLOT_START: Indicates the order of time slot start.   - E2E_DATA_VOL_TRANS_TIME: The ordering criterion is the E2E data volume transfer time.

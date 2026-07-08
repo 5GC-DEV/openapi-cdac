@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // PsaIndication Indication of whether a PSA is inserted or removed. Possible values are   - PSA_INSERTED   - PSA_REMOVED   - PSA_INSERTED_ONLY   - PSA_REMOVED_ONLY

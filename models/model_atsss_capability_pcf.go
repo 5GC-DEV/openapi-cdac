@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AtsssCapabilityPcf Contains the ATSSS capability supported for the MA PDU Session.

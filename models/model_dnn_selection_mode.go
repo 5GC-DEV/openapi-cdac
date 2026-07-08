@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // DnnSelectionMode DNN Selection Mode. Possible values are - VERIFIED - UE_DNN_NOT_VERIFIED - NW_DNN_NOT_VERIFIED

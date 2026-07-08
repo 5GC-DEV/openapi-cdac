@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nudm_UECM "github.com/omec-project/openapi/Nudm_UECM"
+import Nudm_UECM "github.com/5GC-DEV/openapi-cdac/Nudm_UECM"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

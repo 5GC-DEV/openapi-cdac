@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // LocalityType Type of locality description. An operator may define custom locality type values other  than those listed in this enumeration.

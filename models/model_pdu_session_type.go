@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // PduSessionType PduSessionType indicates the type of a PDU session. It shall comply with the provisions defined in table 5.4.3.3-1.

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // NotificationMethod Represents the notification methods that can be subscribed.   Possible values are: - PERIODIC - ONE_TIME - ON_EVENT_DETECTION

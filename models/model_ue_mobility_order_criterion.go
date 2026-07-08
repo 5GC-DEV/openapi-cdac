@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // UeMobilityOrderCriterion Represents the ordering criterion for the list of UE mobility analytics.   Possible values are:     - TIME_SLOT: The ordering criterion is the time slot.

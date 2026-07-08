@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // ConditionEventType Indicates whether a notification is due to the NF Instance to start or stop being part of a condition for a subscription to a set of NFs

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // QosFlowUsage Indicates a QoS flow usage information.   Possible values are - GENERAL: Indicate no specific QoS flow usage information is available. - IMS_SIG: Indicate that the QoS flow is used for IMS signalling only.

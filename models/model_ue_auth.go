@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // UeAuth Possible values are: - AUTHORIZED: Indicates that the UE is authorized. - NOT_AUTHORIZED: Indicates that the UE is not authorized.

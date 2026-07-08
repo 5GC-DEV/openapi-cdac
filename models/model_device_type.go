@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // DeviceType Represents the device type.   Possible values are:     - MOBILE_PHONE: Mobile Phone.   - SMART_PHONE: Smartphone.   - TABLET: Tablet.   - DONGLE: Dongle.   - MODEM: Modem.   - WLAN_ROUTER: WLAN Router.   - IOT_DEVICE: IoT Device.   - WEARABLE: Wearable.   - MOBILE_TEST_PLATFORM: Mobile Test Platform.   - UNDEFINED: Undefined.

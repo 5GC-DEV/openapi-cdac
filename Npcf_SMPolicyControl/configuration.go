@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // contextKeys are used to identify the type of value in the context.

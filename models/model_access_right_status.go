@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AccessRightStatus Represents the access right status for parameter provision.   Possible values are: - FULLY_ALLOWED: The User is fully allowed to access to the channel. - PREVIEW_ALLOWED: The User is preview allowed to access to the channel. - NO_ALLOWED: The User is not allowed to access to the channel.

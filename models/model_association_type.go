@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AssociationType Indicates association type to be included to identify  whether it is IMSI-IMEI or IMSI-IMEISV.

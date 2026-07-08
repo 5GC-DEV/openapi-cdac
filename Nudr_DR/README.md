@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nudr_DR "github.com/omec-project/openapi/Nudr_DR"
+import Nudr_DR "github.com/5GC-DEV/openapi-cdac/Nudr_DR"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

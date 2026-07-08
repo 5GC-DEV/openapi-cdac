@@ -21,7 +21,7 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // checks if the Local2dPointUncertaintyEllipse type satisfies the MappedNullable interface at compile time

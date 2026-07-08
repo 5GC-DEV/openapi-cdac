@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nnrf_NFDiscovery "github.com/omec-project/openapi/Nnrf_NFDiscovery"
+import Nnrf_NFDiscovery "github.com/5GC-DEV/openapi-cdac/Nnrf_NFDiscovery"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

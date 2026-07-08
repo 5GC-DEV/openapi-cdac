@@ -31,8 +31,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/omec-project/openapi/v2"
-	"github.com/omec-project/openapi/v2/logger"
+	"github.com/5GC-DEV/openapi-cdac/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2/logger"
 )
 
 // APIClient manages communication with the NRF OAuth2 API v1.3.0-alpha.1

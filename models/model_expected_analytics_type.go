@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // ExpectedAnalyticsType Represents the expected UE analytics type.   Possible values are: - MOBILITY: Mobility related abnormal behaviour analytics is expected by the consumer. - COMMUN: Communication related abnormal behaviour analytics is expected by the consumer. - MOBILITY_AND_COMMUN: Both mobility and communication related abnormal behaviour analytics   is expected by the consumer.

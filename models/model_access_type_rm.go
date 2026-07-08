@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AccessTypeRm Indicates wether the access is via 3GPP or via non-3GPP but with the OpenAPI  'nullable: true' property.\"

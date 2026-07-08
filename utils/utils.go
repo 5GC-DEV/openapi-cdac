@@ -6,7 +6,7 @@ package utils
 import (
 	"net/http"
 
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 func ProblemDetailsSystemFailure(detail string) *models.ProblemDetails {

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // EstablishmentRejectionCause PDU Session Establishment Rejection Cause. Possible values are   - OPERATOR_DETERMINED_BARRING

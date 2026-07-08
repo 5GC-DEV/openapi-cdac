@@ -30,7 +30,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nnrf_AccessToken "github.com/omec-project/openapi/Nnrf_AccessToken"
+import Nnrf_AccessToken "github.com/5GC-DEV/openapi-cdac/Nnrf_AccessToken"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

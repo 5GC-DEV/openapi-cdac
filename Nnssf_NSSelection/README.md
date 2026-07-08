@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nnssf_NSSelection "github.com/omec-project/openapi/Nnssf_NSSelection"
+import Nnssf_NSSelection "github.com/5GC-DEV/openapi-cdac/Nnssf_NSSelection"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

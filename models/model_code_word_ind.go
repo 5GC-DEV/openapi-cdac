@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // CodeWordInd Indicates that the codeword shall be checked in UE or one or more codeword values to be checked in GMLC.

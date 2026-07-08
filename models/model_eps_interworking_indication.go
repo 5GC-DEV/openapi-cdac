@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // EpsInterworkingIndication EPS Interworking Indication. Possible values are - NONE - WITH_N26 - WITHOUT_N26 - IWK_NON_3GPP

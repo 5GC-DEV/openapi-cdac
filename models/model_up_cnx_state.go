@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // UpCnxState User Plane Connection State. Possible values are - ACTIVATED - DEACTIVATED - ACTIVATING - SUSPENDED

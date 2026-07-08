@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // PreemptionCapabilityRm This enumeration is defined in the same way as the 'PreemptionCapability' enumeration, but with the OpenAPI 'nullable: true' property.

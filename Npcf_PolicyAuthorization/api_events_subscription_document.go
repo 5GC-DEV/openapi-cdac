@@ -26,9 +26,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/omec-project/openapi/v2"
-	"github.com/omec-project/openapi/v2/logger"
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2/logger"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 type EventsSubscriptionDocumentAPI interface {

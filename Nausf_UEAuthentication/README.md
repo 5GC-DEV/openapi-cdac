@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Nausf_UEAuthentication "github.com/omec-project/openapi/Nausf_UEAuthentication"
+import Nausf_UEAuthentication "github.com/5GC-DEV/openapi-cdac/Nausf_UEAuthentication"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

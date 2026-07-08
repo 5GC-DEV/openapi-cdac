@@ -20,7 +20,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 func Test_Nudr_DR_QueryServiceSpecificAuthorizationDataDocumentAPIService(t *testing.T) {

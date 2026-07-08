@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // PduSetHandlingInfo Possible values are: - \"ALL_PDUS_NEEDED\": All PDUs of the PDU Set are needed - \"ALL_PDUS_NOT_NEEDED\": All PDUs of the PDU Set are not needed

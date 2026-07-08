@@ -31,7 +31,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import Npcf_PolicyAuthorization "github.com/omec-project/openapi/Npcf_PolicyAuthorization"
+import Npcf_PolicyAuthorization "github.com/5GC-DEV/openapi-cdac/Npcf_PolicyAuthorization"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

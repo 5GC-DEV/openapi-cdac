@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // MpsAction Indicates whether it is an invocation, a revocation or an invocation with authorization of the MPS for DTS service.

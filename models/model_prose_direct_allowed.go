@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // ProseDirectAllowed Indicates the 5G ProSe Direct services that can be authorised to  use in the given PLMN for the UE.

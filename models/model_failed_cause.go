@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // FailedCause Contains the Failed cause of the failed monitoring configuration in the EE subscription. event monitoring.

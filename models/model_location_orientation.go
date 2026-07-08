@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // LocationOrientation Possible values are:     - HORIZONTAL: Indicates horizontal orientation.   - VERTICAL: Indicates vertical orientation.   - HOR_AND_VER: Indicates both horizontal and vertical orientation.

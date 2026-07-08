@@ -19,9 +19,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/omec-project/openapi/v2/Nnrf_NFDiscovery"
-	"github.com/omec-project/openapi/v2/logger"
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2/Nnrf_NFDiscovery"
+	"github.com/5GC-DEV/openapi-cdac/v2/logger"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 type MatchFilter func(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error)

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // Accuracy Represents the preferred level of accuracy of the analytics.   Possible values are: - LOW: Low accuracy. - MEDIUM: Medium accuracy. - HIGH: High accuracy. - HIGHEST: Highest accuracy.

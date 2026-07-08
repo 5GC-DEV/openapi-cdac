@@ -32,7 +32,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/omec-project/openapi/v2/logger"
+	"github.com/5GC-DEV/openapi-cdac/v2/logger"
 )
 
 type MultipartRelatedBinding struct{}

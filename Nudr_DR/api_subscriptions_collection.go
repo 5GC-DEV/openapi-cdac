@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 type SubscriptionsCollectionAPI interface {

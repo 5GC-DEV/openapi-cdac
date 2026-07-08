@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // SipForkingIndication Indicates whether several SIP dialogues are related to an \"Individual Application Session Context\" resource.

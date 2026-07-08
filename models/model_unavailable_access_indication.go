@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // UnavailableAccessIndication Indicates the access type of a MA PDU session that is unavailable. Possible values are   - 3GA_UNAVAILABLE   - N3GA_UNAVAILABLE

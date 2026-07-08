@@ -3,8 +3,8 @@ Copyright (C) 2026 Intel Corporation
 SPDX-License-Identifier: Apache-2.0
 -->
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/omec-project/openapi)](https://goreportcard.com/report/github.com/omec-project/openapi)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/omec-project/openapi/badge)](https://scorecard.dev/viewer/?uri=github.com/omec-project/openapi)
+[![Go Report Card](https://goreportcard.com/badge/github.com/5GC-DEV/openapi-cdac)](https://goreportcard.com/report/github.com/5GC-DEV/openapi-cdac)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/5GC-DEV/openapi-cdac/badge)](https://scorecard.dev/viewer/?uri=github.com/5GC-DEV/openapi-cdac)
 
 ## Overview
 
@@ -27,7 +27,7 @@ go mod tidy
 Put the package under your project folder and add the following in import:
 
 ```go
-import openapi "github.com/omec-project/openapi"
+import openapi "github.com/5GC-DEV/openapi-cdac"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

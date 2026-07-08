@@ -25,8 +25,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/omec-project/openapi/v2"
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 type N1N2MessageCollectionCollectionCallbackN1N2TransferFailureAPI interface {
