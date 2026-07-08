@@ -1,4 +1,4 @@
-module github.com/5GC-DEV/openapi-cdac
+module github.com/omec-project/openapi/v2
 
 go 1.25.0
 
