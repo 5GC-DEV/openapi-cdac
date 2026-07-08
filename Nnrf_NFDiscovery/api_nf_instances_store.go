@@ -21,7 +21,6 @@ package Nnrf_NFDiscovery
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -1739,11 +1738,8 @@ func (a *NFInstancesStoreAPIService) SearchNFInstancesExecute(r ApiSearchNFInsta
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		fmt.Printf("PrepareRequest failed: %+v", err)
 		return localVarReturnValue, nil, err
 	}
-
-	fmt.Printf("Sending NRF request: method=%s url=%s", r.Method, r.URL.String())
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {

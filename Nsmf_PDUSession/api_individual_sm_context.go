@@ -447,7 +447,7 @@ func (a *IndividualSMContextAPIService) RetrieveSmContextExecute(r ApiRetrieveSm
 	localVarPostBody = r.smContextRetrieveData
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
@@ -703,9 +703,295 @@ func (a *IndividualSMContextAPIService) SendMoDataExecute(r ApiSendMoDataRequest
 	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json"}
 
 	// set Accept header
-	localVarHttpHeaderAccept := openapi.SelectHeaderAccept(localVarHttpHeaderAccepts)
-	if localVarHttpHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHttpHeaderAccept
+	localVarHTTPHeaderAccept := openapi.SelectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.jsonData != nil {
+		paramJson, err := openapi.ParameterToJson(*r.jsonData)
+		if err != nil {
+			return nil, err
+		}
+		localVarFormParams.Add("jsonData", paramJson)
+	}
+	var binaryMoDataLocalVarFormFileName string
+	var binaryMoDataLocalVarFileName string
+	var binaryMoDataLocalVarFileBytes []byte
+
+	binaryMoDataLocalVarFormFileName = "binaryMoData"
+	binaryMoDataLocalVarFile := r.binaryMoData
+
+	if binaryMoDataLocalVarFile != nil {
+		fbs, _ := io.ReadAll(binaryMoDataLocalVarFile)
+
+		binaryMoDataLocalVarFileBytes = fbs
+		binaryMoDataLocalVarFileName = binaryMoDataLocalVarFile.Name()
+		binaryMoDataLocalVarFile.Close()
+		formFiles = append(formFiles, formFile{fileBytes: binaryMoDataLocalVarFileBytes, fileName: binaryMoDataLocalVarFileName, formFileName: binaryMoDataLocalVarFormFileName, contentType: "application/vnd.3gpp.5gnas"})
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &openapi.GenericOpenAPIError{
+			RawBody:  localVarBody,
+			RawError: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 307 {
+			var v models.RedirectResponse
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 308 {
+			var v models.RedirectResponse
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 411 {
+			var v models.ProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 413 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 415 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 429 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 502 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v models.ExtProblemDetails
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.RawError = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.RawError = openapi.FormatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.RawModel = v
+			return localVarHTTPResponse, newErr
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type ApiUpdateSmContextRequest struct {
+	ctx                           context.Context
+	ApiService                    IndividualSMContextAPI
+	smContextRef                  string
+	smContextUpdateData           *models.SmContextUpdateData
+	binaryDataN1SmMessage         *os.File
+	binaryDataN2SmInformation     *os.File
+	binaryDataN2SmInformationExt1 *os.File
+}
+
+// representation of the updates to apply to the SM context
+func (r ApiUpdateSmContextRequest) SmContextUpdateData(smContextUpdateData models.SmContextUpdateData) ApiUpdateSmContextRequest {
+	r.smContextUpdateData = &smContextUpdateData
+	return r
+}
+
+func (r ApiUpdateSmContextRequest) BinaryDataN1SmMessage(binaryDataN1SmMessage *os.File) ApiUpdateSmContextRequest {
+	r.binaryDataN1SmMessage = binaryDataN1SmMessage
+	return r
+}
+
+func (r ApiUpdateSmContextRequest) BinaryDataN2SmInformation(binaryDataN2SmInformation *os.File) ApiUpdateSmContextRequest {
+	r.binaryDataN2SmInformation = binaryDataN2SmInformation
+	return r
+}
+
+func (r ApiUpdateSmContextRequest) BinaryDataN2SmInformationExt1(binaryDataN2SmInformationExt1 *os.File) ApiUpdateSmContextRequest {
+	r.binaryDataN2SmInformationExt1 = binaryDataN2SmInformationExt1
+	return r
+}
+
+func (r ApiUpdateSmContextRequest) Execute() (*models.SmContextUpdatedData, *http.Response, error) {
+	return r.ApiService.UpdateSmContextExecute(r)
+}
+
+/*
+UpdateSmContext Update SM Context
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param smContextRef SM context reference
+	@return ApiUpdateSmContextRequest
+*/
+func (a *IndividualSMContextAPIService) UpdateSmContext(ctx context.Context, smContextRef string) ApiUpdateSmContextRequest {
+	return ApiUpdateSmContextRequest{
+		ApiService:   a,
+		ctx:          ctx,
+		smContextRef: smContextRef,
+	}
+}
+
+// Execute executes the request
+//
+//	@return SmContextUpdatedData
+func (a *IndividualSMContextAPIService) UpdateSmContextExecute(r ApiUpdateSmContextRequest) (*models.SmContextUpdatedData, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    any
+		formFiles           []formFile
+		localVarReturnValue *models.SmContextUpdatedData
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "IndividualSMContextAPIService.UpdateSmContext")
+	if err != nil {
+		return localVarReturnValue, nil, &openapi.GenericOpenAPIError{RawError: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/sm-contexts/{smContextRef}/modify"
+	localVarPath = strings.ReplaceAll(localVarPath, "{"+"smContextRef"+"}", url.PathEscape(openapi.ParameterValueToString(r.smContextRef, "smContextRef")))
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.smContextUpdateData == nil {
+		return localVarReturnValue, nil, openapi.ReportError("smContextUpdateData is required and must be specified")
+	}
+
+	// set Content-Type header
+	localVarHTTPContentType := "application/json"
+	if r.binaryDataN1SmMessage != nil || r.binaryDataN2SmInformation != nil || r.binaryDataN2SmInformationExt1 != nil {
+		localVarHTTPContentType = "multipart/related"
+	}
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json", "multipart/related", "application/problem+json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := openapi.SelectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	var binaryDataN1SmMessageLocalVarFormFileName string
 	var binaryDataN1SmMessageLocalVarFileName string
