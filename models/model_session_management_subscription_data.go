@@ -29,7 +29,7 @@ var _ openapi.MappedNullable = &SessionManagementSubscriptionData{}
 
 // SessionManagementSubscriptionData struct for SessionManagementSubscriptionData
 type SessionManagementSubscriptionData struct {
-	SingleNssai Snssai `json:"singleNssai" yaml:"singleNssai"`
+	SingleNssai []Snssai `json:"singleNssai" yaml:"singleNssai"`
 	// A map (list of key-value pairs where Dnn, or optionally the Wildcard DNN, serves as key) of DnnConfigurations
 	DnnConfigurations *map[string]DnnConfiguration `json:"dnnConfigurations,omitempty" yaml:"dnnConfigurations,omitempty"`
 	InternalGroupIds  []string                     `json:"internalGroupIds,omitempty" yaml:"internalGroupIds,omitempty"`
@@ -61,7 +61,7 @@ type SessionManagementSubscriptionData struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSessionManagementSubscriptionData(singleNssai Snssai) *SessionManagementSubscriptionData {
+func NewSessionManagementSubscriptionData(singleNssai []Snssai) *SessionManagementSubscriptionData {
 	this := SessionManagementSubscriptionData{}
 	this.SingleNssai = singleNssai
 	var onDemand bool = false
@@ -80,10 +80,9 @@ func NewSessionManagementSubscriptionDataWithDefaults() *SessionManagementSubscr
 }
 
 // GetSingleNssai returns the SingleNssai field value
-func (o *SessionManagementSubscriptionData) GetSingleNssai() Snssai {
+func (o *SessionManagementSubscriptionData) GetSingleNssai() []Snssai {
 	if o == nil {
-		var ret Snssai
-		return ret
+		return nil
 	}
 
 	return o.SingleNssai
@@ -91,7 +90,7 @@ func (o *SessionManagementSubscriptionData) GetSingleNssai() Snssai {
 
 // GetSingleNssaiOk returns a tuple with the SingleNssai field value
 // and a boolean to check if the value has been set.
-func (o *SessionManagementSubscriptionData) GetSingleNssaiOk() (*Snssai, bool) {
+func (o *SessionManagementSubscriptionData) GetSingleNssaiOk() (*[]Snssai, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -99,7 +98,7 @@ func (o *SessionManagementSubscriptionData) GetSingleNssaiOk() (*Snssai, bool) {
 }
 
 // SetSingleNssai sets field value
-func (o *SessionManagementSubscriptionData) SetSingleNssai(v Snssai) {
+func (o *SessionManagementSubscriptionData) SetSingleNssai(v []Snssai) {
 	o.SingleNssai = v
 }
 
