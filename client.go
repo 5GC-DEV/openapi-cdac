@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/5GC-DEV/openapi-cdac/logger"
+	"github.com/google/uuid"
 	"golang.org/x/net/http2"
 	"golang.org/x/oauth2"
 	"gopkg.in/h2non/gock.v1"
@@ -53,7 +54,23 @@ var (
 		Transport: &http2.Transport{
 			AllowHTTP: true,
 			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
+				logger.OpenapiLog.Infof(
+					"[HTTP2] Dial network=%s addr=%s",
+					network,
+					addr,
+				)
+
+				conn, err := net.Dial(network, addr)
+
+				if err != nil {
+					logger.OpenapiLog.Errorf(
+						"[HTTP2] Dial failed addr=%s err=%v",
+						addr,
+						err,
+					)
+				}
+
+				return conn, err
 			},
 		},
 	}
@@ -128,7 +145,6 @@ func ParameterToString(obj interface{}, collectionFormat string) string {
 	return fmt.Sprintf("%v", obj)
 }
 
-// callAPI do the request.
 func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 	logger.OpenapiLog.Debugln("[CallAPI] Enter")
 
@@ -148,43 +164,227 @@ func CallAPI(cfg Configuration, request *http.Request) (*http.Response, error) {
 	}
 
 	var (
-		resp *http.Response
-		err  error
+		resp       *http.Response
+		err        error
+		httpClient *http.Client
 	)
 
-	if request.URL.Scheme == "https" {
+	const maxRetries = 3
+
+	switch request.URL.Scheme {
+
+	case "https":
 		logger.OpenapiLog.Debugln("[CallAPI] Using HTTPS client")
+		httpClient = innerHTTP2Client
 
-		resp, err = innerHTTP2Client.Do(request)
-
-	} else if request.URL.Scheme == "http" {
+	case "http":
 		logger.OpenapiLog.Debugln("[CallAPI] Using HTTP cleartext client")
+		httpClient = innerHTTP2CleartextClient
 
-		resp, err = innerHTTP2CleartextClient.Do(request)
+	default:
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] Unsupported scheme: %s",
+			request.URL.Scheme,
+		)
 
+		return nil, fmt.Errorf(
+			"unsupported scheme[%s]",
+			request.URL.Scheme,
+		)
+	}
+
+	if deadline, ok := request.Context().Deadline(); ok {
+		logger.OpenapiLog.Infof(
+			"[CallAPI] Initial Context Deadline=%v Remaining=%v",
+			deadline,
+			time.Until(deadline),
+		)
 	} else {
-		logger.OpenapiLog.Errorf("[CallAPI] Unsupported scheme: %s",
-			request.URL.Scheme)
+		logger.OpenapiLog.Infof(
+			"[CallAPI] Request has no context deadline",
+		)
+	}
 
-		return nil, fmt.Errorf("unsupported scheme[%s]",
-			request.URL.Scheme)
+	var idempotencyKey string
+
+	if isNonIdempotent(request.Method) {
+
+		requestInfo := request.Header.Get("3gpp-Sbi-Request-Info")
+
+		if requestInfo == "" {
+
+			idempotencyKey = uuid.NewString()
+
+			request.Header.Set(
+				"3gpp-Sbi-Request-Info",
+				fmt.Sprintf("idempotency-key=%s", idempotencyKey),
+			)
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Generated IdempotencyKey=%s",
+				idempotencyKey,
+			)
+
+		} else {
+
+			idempotencyKey = requestInfo
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Existing 3gpp-Sbi-Request-Info=%s",
+				requestInfo,
+			)
+		}
+	}
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+
+		if deadline, ok := request.Context().Deadline(); ok {
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Attempt=%d Method=%s RemainingContext=%v Deadline=%v",
+				attempt,
+				request.Method,
+				time.Until(deadline),
+				deadline,
+			)
+		}
+
+		logger.OpenapiLog.Infof(
+			"[CallAPI] HTTP Client Timeout=%v",
+			httpClient.Timeout,
+		)
+
+		if attempt > 1 &&
+			isNonIdempotent(request.Method) &&
+			idempotencyKey != "" {
+
+			request.Header.Set(
+				"3gpp-Sbi-Request-Info",
+				fmt.Sprintf(
+					"retrans=true; idempotency-key=%s",
+					idempotencyKey,
+				),
+			)
+
+			logger.OpenapiLog.Infof(
+				"[CallAPI] Retry attempt=%d with SBI Request Info=%s",
+				attempt,
+				request.Header.Get("3gpp-Sbi-Request-Info"),
+			)
+		}
+
+		resp, err = httpClient.Do(request)
+
+		if err == nil {
+			break
+		}
+
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] attempt=%d/%d failed errType=%T err=%v",
+			attempt,
+			maxRetries,
+			err,
+			err,
+		)
+
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] errors.Is(context.DeadlineExceeded)=%v",
+			errors.Is(err, context.DeadlineExceeded),
+		)
+
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] errors.Is(context.Canceled)=%v",
+			errors.Is(err, context.Canceled),
+		)
+
+		if ue, ok := err.(*url.Error); ok {
+
+			logger.OpenapiLog.Errorf(
+				"[CallAPI] url.Error Op=%s URL=%s InnerType=%T InnerErr=%v",
+				ue.Op,
+				ue.URL,
+				ue.Err,
+				ue.Err,
+			)
+
+			if errors.Is(ue.Err, context.DeadlineExceeded) {
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] Request context deadline exceeded",
+				)
+			}
+
+			if errors.Is(ue.Err, context.Canceled) {
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] Request context cancelled",
+				)
+			}
+
+			if unwrapped := errors.Unwrap(ue.Err); unwrapped != nil {
+				logger.OpenapiLog.Errorf(
+					"[CallAPI] UnwrappedType=%T UnwrappedErr=%v",
+					unwrapped,
+					unwrapped,
+				)
+			}
+		}
+		if !shouldRetry(request.Method, err) {
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Retry not allowed method=%s err=%v",
+				request.Method,
+				err,
+			)
+
+			return resp, err
+		}
+		if attempt < maxRetries {
+
+			if request.GetBody != nil {
+				request.Body, _ = request.GetBody()
+			}
+
+			backoff := time.Duration(attempt*100) * time.Millisecond
+
+			logger.OpenapiLog.Warnf(
+				"[CallAPI] Retrying after %v",
+				backoff,
+			)
+
+			time.Sleep(backoff)
+		}
 	}
 
 	if err != nil {
-		logger.OpenapiLog.Errorf("[CallAPI] HTTP request failed: %v", err)
+		logger.OpenapiLog.Errorf(
+			"[CallAPI] HTTP request failed after retries: %v",
+			err,
+		)
+
 		return resp, err
 	}
 
 	if resp == nil {
-		logger.OpenapiLog.Errorln("[CallAPI] Received nil HTTP response")
+		logger.OpenapiLog.Errorln(
+			"[CallAPI] Received nil HTTP response",
+		)
+
 		return nil, fmt.Errorf("nil http response")
 	}
 
-	logger.OpenapiLog.Debugf("[CallAPI] Response Status: %s", resp.Status)
-	logger.OpenapiLog.Debugf("[CallAPI] Response Status Code: %d", resp.StatusCode)
+	logger.OpenapiLog.Debugf(
+		"[CallAPI] Response Status: %s",
+		resp.Status,
+	)
+
+	logger.OpenapiLog.Debugf(
+		"[CallAPI] Response Status Code: %d",
+		resp.StatusCode,
+	)
 
 	for key, value := range resp.Header {
-		logger.OpenapiLog.Debugf("[CallAPI] Response Header %s: %v", key, value)
+		logger.OpenapiLog.Debugf(
+			"[CallAPI] Response Header %s: %v",
+			key,
+			value,
+		)
 	}
 
 	logger.OpenapiLog.Debugln("[CallAPI] Exit")
@@ -644,8 +844,17 @@ func Deserialize(v interface{}, b []byte, contentType string) (err error) {
 		logger.OpenapiLog.Debugf("[Deserialize] String body: %s", *s)
 		return nil
 	}
-
+	logger.OpenapiLog.Errorf(
+		"[Deserialize] contentType='%s' bodyLen=%d body='%s'",
+		contentType,
+		len(b),
+		string(b),
+	)
 	mediaType := KindOfMediaType(contentType)
+	logger.OpenapiLog.Errorf(
+		"[Deserialize] mediaType=%v",
+		mediaType,
+	)
 
 	logger.OpenapiLog.Debugf("[Deserialize] Detected media type: %v", mediaType)
 
@@ -846,4 +1055,53 @@ func InterceptH2CClient() {
 
 func RestoreH2CClient() {
 	gock.RestoreClient(innerHTTP2CleartextClient)
+}
+
+func shouldRetry(method string, err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Idempotent methods
+	switch method {
+	case http.MethodGet,
+		http.MethodHead,
+		http.MethodPut,
+		http.MethodDelete:
+		return true
+	}
+
+	// Non-idempotent POST
+	if method == http.MethodPost {
+		errStr := err.Error()
+
+		// RFC7540 / 3GPP TS 29.500 allowed retry cases
+		if strings.Contains(errStr, "REFUSED_STREAM") {
+			return true
+		}
+
+		if strings.Contains(errStr, "GOAWAY") {
+			return true
+		}
+
+		if strings.Contains(errStr, "client conn could not be established") {
+			logger.OpenapiLog.Warn(
+				"[CallAPI] Retrying POST due to connection establishment failure",
+			)
+			return true
+		}
+
+	}
+
+	return false
+}
+
+func isNonIdempotent(method string) bool {
+	switch method {
+	case http.MethodPost,
+		http.MethodPatch:
+		return true
+	default:
+		return false
+	}
 }
