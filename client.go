@@ -1072,7 +1072,7 @@ func shouldRetry(method string, err error) bool {
 	}
 
 	// Non-idempotent POST
-	if method == http.MethodPost {
+	if method == http.MethodPost || method == http.MethodPatch {
 		errStr := err.Error()
 
 		// RFC7540 / 3GPP TS 29.500 allowed retry cases
@@ -1085,9 +1085,7 @@ func shouldRetry(method string, err error) bool {
 		}
 
 		if strings.Contains(errStr, "client conn could not be established") {
-			logger.OpenapiLog.Warn(
-				"[CallAPI] Retrying POST due to connection establishment failure",
-			)
+			logger.OpenapiLog.Warnf("[CallAPI] Retrying %s due to connection establishment failure", method)
 			return true
 		}
 
