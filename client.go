@@ -838,13 +838,13 @@ func Deserialize(v interface{}, b []byte, contentType string) (err error) {
 		contentType, v, len(b))
 
 	if s, ok := v.(*string); ok {
-		logger.OpenapiLog.Debugln("[Deserialize] Target type is string")
+		logger.OpenapiLog.Debugf("[Deserialize] Target type is string")
 		*s = string(b)
 
 		logger.OpenapiLog.Debugf("[Deserialize] String body: %s", *s)
 		return nil
 	}
-	logger.OpenapiLog.Errorf(
+	logger.OpenapiLog.Debugf(
 		"[Deserialize] contentType='%s' bodyLen=%d body='%s'",
 		contentType,
 		len(b),
