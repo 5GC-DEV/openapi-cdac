@@ -6,74 +6,89 @@
  */
 
 // This file contains apis to match the nf profiles based on the parameters provided in the
-// Nnrf_NFDiscovery.SearchNFInstancesParamOpts. There is a match function provided for each NF type
+// Nnrf_NFDiscovery.ApiSearchNFInstancesRequest. There is a match function provided for each NF type
 // which must be updated with logic to compare profiles based on the applicable params in
-// Nnrf_NFDiscovery.SearchNFInstancesParamOpts
+// Nnrf_NFDiscovery.ApiSearchNFInstancesRequest
 
 package nrfcache
 
 import (
-	"encoding/json"
+	"fmt"
 	"regexp"
+	"slices"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
 
-	"github.com/5GC-DEV/openapi-cdac/Nnrf_NFDiscovery"
-	"github.com/5GC-DEV/openapi-cdac/logger"
-	"github.com/5GC-DEV/openapi-cdac/models"
+	"github.com/5GC-DEV/openapi-cdac/v2/Nnrf_NFDiscovery"
+	"github.com/5GC-DEV/openapi-cdac/v2/logger"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
-type MatchFilter func(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error)
+// maxRegexpCacheEntries caps the SUPI-pattern cache to prevent unbounded growth.
+const maxRegexpCacheEntries = 1024
 
-type MatchFilters map[models.NfType]MatchFilter
+var (
+	regexpCache      sync.Map
+	regexpCacheCount atomic.Int64
+)
+
+type MatchFilter func(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error)
+
+type MatchFilters map[models.NFType]MatchFilter
 
 var matchFilters = MatchFilters{
-	models.NfType_SMF:  MatchSmfProfile,
-	models.NfType_AUSF: MatchAusfProfile,
-	models.NfType_PCF:  MatchPcfProfile,
-	models.NfType_NSSF: MatchNssfProfile,
-	models.NfType_UDM:  MatchUdmProfile,
-	models.NfType_AMF:  MatchAmfProfile,
+	models.NFTYPE_SMF:  MatchSmfProfile,
+	models.NFTYPE_AUSF: MatchAusfProfile,
+	models.NFTYPE_PCF:  MatchPcfProfile,
+	models.NFTYPE_NSSF: MatchNssfProfile,
+	models.NFTYPE_UDM:  MatchUdmProfile,
+	models.NFTYPE_UDR:  MatchUdrProfile,
+	models.NFTYPE_AMF:  MatchAmfProfile,
 }
 
-func MatchSmfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
-	if opts.ServiceNames.IsSet() {
-		reqServiceNames := opts.ServiceNames.Value().([]models.ServiceName)
-		matchCount := 0
-		for _, sn := range reqServiceNames {
-			for i := 0; i < len(*profile.NfServices); i++ {
-				if (*profile.NfServices)[i].ServiceName == sn {
-					matchCount++
+func MatchSmfProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
+	serviceNames := opts.GetServiceNames()
+	if serviceNames != nil && len(*serviceNames) > 0 {
+		found := false
+		for _, requiredService := range *serviceNames {
+			for _, nfService := range profile.GetNfServices() {
+				if nfService.GetServiceName() == requiredService {
+					found = true
 					break
 				}
 			}
+			if found {
+				break
+			}
 		}
 
-		if matchCount == 0 {
+		if !found {
+			logger.NrfcacheLog.Debugf("smf match failed: no service match for %s", profile.GetNfInstanceId())
 			return false, nil
 		}
 	}
 
-	if opts.Snssais.IsSet() {
-		reqSnssais := opts.Snssais.Value().([]string)
+	snssais := opts.GetSnssais()
+	if snssais != nil {
 		matchCount := 0
-
-		for _, reqSnssai := range reqSnssais {
-			var snssai models.Snssai
-			err := json.Unmarshal([]byte(reqSnssai), &snssai)
-			if err != nil {
-				logger.NrfcacheLog.Errorf("error Unmarshaling nssai: %+v", err)
-				return false, err
-			}
-
+		smfInfo, hasSmfInfo := profile.GetSmfInfoOk()
+		for _, reqSnssai := range *snssais {
 			// Snssai in the smfInfo has priority
-			if profile.SmfInfo != nil && profile.SmfInfo.SNssaiSmfInfoList != nil {
-				for _, s := range *profile.SmfInfo.SNssaiSmfInfoList {
-					if s.SNssai != nil && (*s.SNssai) == snssai {
+			if hasSmfInfo && len(smfInfo.GetSNssaiSmfInfoList()) > 0 {
+				for _, s := range smfInfo.GetSNssaiSmfInfoList() {
+					snssai := s.GetSNssai()
+					if snssai.GetSst() == reqSnssai.GetSst() && snssai.GetSd() == reqSnssai.GetSd() {
 						matchCount++
 					}
 				}
-			} else if profile.AllowedNssais != nil {
-				for _, s := range *profile.AllowedNssais {
-					if s == snssai {
+			} else {
+				for _, s := range profile.GetAllowedNssais() {
+					if s.GetSst() == reqSnssai.GetSst() && s.GetSd() == reqSnssai.GetSd() {
 						matchCount++
 					}
 				}
@@ -86,21 +101,33 @@ func MatchSmfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFI
 		}
 	}
 
-	// validate dnn
-	if opts.Dnn.IsSet() {
+	// validate dnn within the S-NSSAI context when snssais filter is also active
+	dnn := opts.GetDnn()
+	if dnn != nil {
 		// if a dnn is provided by the upper layer, check for the exact match
 		// or wild card match
 		dnnMatched := false
 
-		if profile.SmfInfo != nil && profile.SmfInfo.SNssaiSmfInfoList != nil {
+		smfInfo, hasSmfInfo := profile.GetSmfInfoOk()
+		if hasSmfInfo {
 		matchDnnLoop:
-			for _, s := range *profile.SmfInfo.SNssaiSmfInfoList {
-				if s.DnnSmfInfoList != nil {
-					for _, d := range *s.DnnSmfInfoList {
-						if d.Dnn == opts.Dnn.Value() || d.Dnn == "*" {
-							dnnMatched = true
-							break matchDnnLoop
+			for _, s := range smfInfo.GetSNssaiSmfInfoList() {
+				if snssais != nil {
+					entrySnssaiMatch := false
+					for _, reqSnssai := range *snssais {
+						if s.SNssai.GetSst() == reqSnssai.GetSst() && s.SNssai.GetSd() == reqSnssai.GetSd() {
+							entrySnssaiMatch = true
+							break
 						}
+					}
+					if !entrySnssaiMatch {
+						continue
+					}
+				}
+				for _, d := range s.GetDnnSmfInfoList() {
+					if d.GetDnn() == *dnn || d.GetDnn() == "*" {
+						dnnMatched = true
+						break matchDnnLoop
 					}
 				}
 			}
@@ -110,148 +137,280 @@ func MatchSmfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFI
 			return false, nil
 		}
 	}
-	logger.NrfcacheLog.Infof("smf match found, nfInstance Id %v", profile.NfInstanceId)
+	logger.NrfcacheLog.Infof("smf match found, nfInstance Id %v", profile.GetNfInstanceId())
 	return true, nil
 }
 
-func MatchSupiRange(supi string, supiRange []models.SupiRange) bool {
-	matchFound := false
+func matchSupiRange(supi string, supiRange []models.SupiRange) bool {
 	for _, s := range supiRange {
-		if len(s.Pattern) > 0 {
-			r, err := regexp.Compile(s.Pattern)
+		if matchSingleSupiRange(supi, s) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchSingleSupiRange(supi string, supiRange models.SupiRange) bool {
+	// Handle regex pattern matching (preferred method)
+	if pattern := supiRange.GetPattern(); pattern != "" {
+		var r *regexp.Regexp
+		if cached, ok := regexpCache.Load(pattern); ok {
+			r = cached.(*regexp.Regexp)
+		} else {
+			var err error
+			r, err = regexp.Compile(pattern)
 			if err != nil {
-				logger.NrfcacheLog.Errorf("parsing pattern error: %v", err)
+				logger.NrfcacheLog.Errorf("invalid SUPI pattern '%s': %v", pattern, err)
 				return false
 			}
-			if r.MatchString(supi) {
-				matchFound = true
-				break
+			if regexpCacheCount.Load() < maxRegexpCacheEntries {
+				if _, loaded := regexpCache.LoadOrStore(pattern, r); !loaded {
+					regexpCacheCount.Add(1)
+				}
 			}
-		} else if s.Start <= supi && supi <= s.End {
-			matchFound = true
-			break
 		}
+		return r.MatchString(supi)
 	}
 
-	return matchFound
-}
+	// Handle numeric range
+	start := supiRange.GetStart()
+	end := supiRange.GetEnd()
 
-func MatchAusfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
-	matchFound := true
-	if opts.Supi.IsSet() {
-		if profile.AusfInfo != nil && len(profile.AusfInfo.SupiRanges) > 0 {
-			matchFound = MatchSupiRange(opts.Supi.Value(), profile.AusfInfo.SupiRanges)
-		}
+	if start == "" || end == "" {
+		return false
 	}
-	logger.NrfcacheLog.Infof("ausf match found = %v", matchFound)
-	return matchFound, nil
+
+	return isSupiInNumericRange(supi, start, end)
 }
 
-func MatchNssfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
+func isSupiInNumericRange(supi, start, end string) bool {
+	supiNum := extractSupiNumber(supi)
+	startNum := extractSupiNumber(start)
+	endNum := extractSupiNumber(end)
+
+	// If extraction failed for any, fall back to string comparison
+	if supiNum == "" || startNum == "" || endNum == "" {
+		return start <= supi && supi <= end
+	}
+
+	// For same-length numbers, string comparison works
+	if len(supiNum) == len(startNum) && len(startNum) == len(endNum) {
+		return startNum <= supiNum && supiNum <= endNum
+	}
+
+	// Different lengths require numeric comparison
+	supiInt, err1 := strconv.ParseInt(supiNum, 10, 64)
+	startInt, err2 := strconv.ParseInt(startNum, 10, 64)
+	endInt, err3 := strconv.ParseInt(endNum, 10, 64)
+
+	if err1 != nil || err2 != nil || err3 != nil {
+		// Fallback to string comparison
+		return start <= supi && supi <= end
+	}
+
+	return startInt <= supiInt && supiInt <= endInt
+}
+
+func extractSupiNumber(supi string) string {
+	if strings.HasPrefix(supi, "imsi-") {
+		return supi[5:]
+	}
+	if strings.HasPrefix(supi, "nai-") {
+		return supi[4:]
+	}
+	// Return as-is if no known prefix
+	return supi
+}
+
+func MatchAusfProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
+	supi := opts.GetSupi()
+	if supi != nil {
+		// Unrestricted when no SUPI ranges are declared; see MatchPcfProfile.
+		ausfInfo, ok := profile.GetAusfInfoOk()
+		if !ok || len(ausfInfo.GetSupiRanges()) == 0 {
+			logger.NrfcacheLog.Debugf("ausf match successful (unrestricted: no SUPI ranges) for %s", profile.GetNfInstanceId())
+			return true, nil
+		}
+
+		matchFound := matchSupiRange(*supi, ausfInfo.GetSupiRanges())
+		if matchFound {
+			logger.NrfcacheLog.Debugf("ausf match successful for %s", profile.GetNfInstanceId())
+		} else {
+			logger.NrfcacheLog.Debugf("ausf match failed: SUPI range mismatch for %s", profile.GetNfInstanceId())
+		}
+		return matchFound, nil
+	}
+
+	logger.NrfcacheLog.Debugf("ausf match successful (no SUPI filter) for %s", profile.GetNfInstanceId())
+	return true, nil
+}
+
+func MatchNssfProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
 	logger.NrfcacheLog.Infoln("nssf match found")
 	return true, nil
 }
 
-func MatchAmfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
-	if opts.TargetPlmnList.IsSet() {
-		if profile.PlmnList != nil {
-			plmnMatchCount := 0
+func MatchAmfProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
 
-			targetPlmnList := opts.TargetPlmnList.Value().([]string)
-			for _, targetPlmn := range targetPlmnList {
-				var plmn models.PlmnId
-				err := json.Unmarshal([]byte(targetPlmn), &plmn)
-				if err != nil {
-					logger.NrfcacheLog.Errorf("error Unmarshaling plmn: %+v", err)
-					return false, err
-				}
-
-				for _, profilePlmn := range *profile.PlmnList {
-					if profilePlmn == plmn {
-						plmnMatchCount++
-						break
-					}
+	if profile.GetNfType() != models.NFTYPE_AMF {
+		return false, fmt.Errorf("profile is not AMF type: %v", profile.GetNfType())
+	}
+	targetPlmnList := opts.GetTargetPlmnList()
+	if targetPlmnList != nil && len(*targetPlmnList) > 0 {
+		profilePlmnList := profile.GetPlmnList()
+		// A profile without plmnList is available to all PLMNs (TS 29.510 Table 6.2.3.2.3.1-1 [Query-11])
+		if len(profilePlmnList) > 0 {
+			found := false
+			for _, targetPlmn := range *targetPlmnList {
+				if slices.Contains(profilePlmnList, targetPlmn) {
+					found = true
+					break
 				}
 			}
-			if plmnMatchCount == 0 {
+			if !found {
+				logger.NrfcacheLog.Debugf("amf match failed: no PLMN match for %s", profile.GetNfInstanceId())
 				return false, nil
 			}
 		}
 	}
 
-	if profile.AmfInfo != nil {
-		if opts.Guami.IsSet() {
-			if profile.AmfInfo.GuamiList != nil {
-				guamiMatchCount := 0
+	targetNfInstanceId := opts.GetTargetNfInstanceId()
+	if targetNfInstanceId != nil && profile.GetNfInstanceId() != *targetNfInstanceId {
+		logger.NrfcacheLog.Debugf("amf match failed: NF instance ID mismatch for %s", profile.GetNfInstanceId())
+		return false, nil
+	}
 
-				guamiList := opts.Guami.Value().([]string)
-				for _, guami := range guamiList {
-					var guamiOpt models.Guami
-					err := json.Unmarshal([]byte(guami), &guamiOpt)
-					if err != nil {
-						logger.NrfcacheLog.Errorf("error Unmarshaling guami: %+v", err)
-						return false, err
-					}
-
-					for _, guami := range *profile.AmfInfo.GuamiList {
-						if guamiOpt == guami {
-							guamiMatchCount++
-							break
-						}
-					}
-				}
-				if guamiMatchCount == 0 {
-					return false, nil
-				}
-			}
+	amfInfo, hasAmfInfo := profile.GetAmfInfoOk()
+	if hasAmfInfo {
+		guamiOpt := opts.GetGuami()
+		if guamiOpt != nil && !slices.Contains(amfInfo.GetGuamiList(), *guamiOpt) {
+			logger.NrfcacheLog.Debugf("amf match failed: GUAMI mismatch for %s", profile.GetNfInstanceId())
+			return false, nil
 		}
 
-		if opts.AmfRegionId.IsSet() {
-			if len(profile.AmfInfo.AmfRegionId) > 0 {
-				if profile.AmfInfo.AmfRegionId != opts.AmfRegionId.Value() {
-					return false, nil
-				}
-			}
+		amfRegionId := opts.GetAmfRegionId()
+		if amfRegionId != nil && amfInfo.GetAmfRegionId() != *amfRegionId {
+			logger.NrfcacheLog.Debugf("amf match failed: AMF region ID mismatch for %s", profile.GetNfInstanceId())
+			return false, nil
 		}
 
-		if opts.AmfSetId.IsSet() {
-			if len(profile.AmfInfo.AmfSetId) > 0 {
-				if profile.AmfInfo.AmfSetId != opts.AmfSetId.Value() {
-					return false, nil
-				}
-			}
+		amfSetId := opts.GetAmfSetId()
+		if amfSetId != nil && amfInfo.GetAmfSetId() != *amfSetId {
+			logger.NrfcacheLog.Debugf("amf match failed: AMF set ID mismatch for %s", profile.GetNfInstanceId())
+			return false, nil
 		}
-
-		if opts.TargetNfInstanceId.IsSet() {
-			if profile.NfInstanceId != "" {
-				if profile.NfInstanceId != opts.TargetNfInstanceId.Value() {
-					return false, nil
-				}
-			}
+		tai := opts.GetTai()
+		// Absent taiList and taiRangeList means unrestricted (TS 29.510 Table 6.1.6.2.11-1).
+		// taiRangeList matching is not yet implemented; profiles with only taiRangeList pass through.
+		if tai != nil && len(amfInfo.GetTaiList()) > 0 && !taiInList(*tai, amfInfo.GetTaiList()) {
+			logger.NrfcacheLog.Debugf("amf match failed: TAI mismatch for %s", profile.GetNfInstanceId())
+			return false, nil
+		}
+	} else {
+		if opts.GetGuami() != nil || opts.GetAmfRegionId() != nil || opts.GetAmfSetId() != nil || opts.GetTai() != nil {
+			logger.NrfcacheLog.Debugf("amf match failed: AMF filters provided but no AmfInfo for %s", profile.GetNfInstanceId())
+			return false, nil
 		}
 	}
-	logger.NrfcacheLog.Infof("amf match found = %v", profile.NfInstanceId)
+
+	logger.NrfcacheLog.Infof("amf match found = %v", profile.GetNfInstanceId())
 	return true, nil
 }
 
-func MatchPcfProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
-	matchFound := true
-	if opts.Supi.IsSet() {
-		if profile.PcfInfo != nil && len(profile.PcfInfo.SupiRanges) > 0 {
-			matchFound = MatchSupiRange(opts.Supi.Value(), profile.PcfInfo.SupiRanges)
+// taiInList matches PlmnId, Tac, and Nid; an absent Nid (PLMN context) matches only another absent Nid.
+func taiInList(tai models.Tai, list []models.Tai) bool {
+	for _, t := range list {
+		if t.GetPlmnId() == tai.GetPlmnId() && t.GetTac() == tai.GetTac() && t.GetNid() == tai.GetNid() {
+			return true
 		}
 	}
-	logger.NrfcacheLog.Infof("pcf match found = %v", matchFound)
-	return matchFound, nil
+	return false
 }
 
-func MatchUdmProfile(profile *models.NfProfile, opts *Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (bool, error) {
-	matchFound := true
-	if opts.Supi.IsSet() {
-		if profile.UdmInfo != nil && len(profile.UdmInfo.SupiRanges) > 0 {
-			matchFound = MatchSupiRange(opts.Supi.Value(), profile.UdmInfo.SupiRanges)
-		}
+func MatchPcfProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
 	}
-	logger.NrfcacheLog.Infof("udm match found = %v", matchFound)
+	supi := opts.GetSupi()
+	if supi != nil {
+		// A profile declaring no SUPI ranges is unrestricted and serves every
+		// SUPI. The NRF's own discovery filter encodes this as an $or over
+		// "a range contains the SUPI" / "supiRanges is null" / "supiRanges is
+		// absent" (nrf producer/nf_discovery.go, [Query-18] supi). Rationale:
+		// the cache must select the same profiles as the NRF it caches,
+		// otherwise a cached lookup and a live discovery disagree.
+		pcfInfo, ok := profile.GetPcfInfoOk()
+		if !ok || len(pcfInfo.GetSupiRanges()) == 0 {
+			logger.NrfcacheLog.Debugf("pcf match found = true (unrestricted: no SUPI ranges)")
+			return true, nil
+		}
+
+		matchFound := matchSupiRange(*supi, pcfInfo.GetSupiRanges())
+		logger.NrfcacheLog.Infof("pcf match found = %v", matchFound)
+		return matchFound, nil
+	}
+
+	// No SUPI filter - match any profile
+	logger.NrfcacheLog.Infof("pcf match found = true (no SUPI filter)")
+	return true, nil
+}
+
+func MatchUdmProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
+	supi := opts.GetSupi()
+	if supi != nil {
+		// Unrestricted when no SUPI ranges are declared; see MatchPcfProfile.
+		udmInfo, ok := profile.GetUdmInfoOk()
+		if !ok || len(udmInfo.GetSupiRanges()) == 0 {
+			logger.NrfcacheLog.Debugf("udm match found = true (unrestricted: no SUPI ranges)")
+			return true, nil
+		}
+
+		matchFound := matchSupiRange(*supi, udmInfo.GetSupiRanges())
+		logger.NrfcacheLog.Infof("udm match found = %v", matchFound)
+		return matchFound, nil
+	}
+
+	// No SUPI filter - match any profile
+	logger.NrfcacheLog.Infof("udm match found = true (no SUPI filter)")
+	return true, nil
+}
+
+// MatchUdrProfile selects UDR profiles for a SUPI-filtered discovery.
+//
+// Without an entry in matchFilters a UDR profile is dropped unconditionally,
+// so a cached UDR lookup returns nothing and every UDM/PCF data access falls
+// through to a live NRF query. Rationale: UDR is resolved on every subscriber
+// data access, which makes it the most frequently discovered NF in the core.
+func MatchUdrProfile(profile *models.NFProfileDiscovery, opts Nnrf_NFDiscovery.ApiSearchNFInstancesRequest) (bool, error) {
+	if profile == nil {
+		return false, fmt.Errorf("profile cannot be nil")
+	}
+	supi := opts.GetSupi()
+	if supi == nil {
+		logger.NrfcacheLog.Debugf("udr match successful (no SUPI filter) for %s", profile.GetNfInstanceId())
+		return true, nil
+	}
+
+	// Unrestricted when no SUPI ranges are declared; see MatchPcfProfile.
+	udrInfo, ok := profile.GetUdrInfoOk()
+	if !ok || len(udrInfo.GetSupiRanges()) == 0 {
+		logger.NrfcacheLog.Debugf("udr match successful (unrestricted: no SUPI ranges) for %s", profile.GetNfInstanceId())
+		return true, nil
+	}
+
+	matchFound := matchSupiRange(*supi, udrInfo.GetSupiRanges())
+	logger.NrfcacheLog.Debugf("udr match found = %v for %s", matchFound, profile.GetNfInstanceId())
 	return matchFound, nil
 }
