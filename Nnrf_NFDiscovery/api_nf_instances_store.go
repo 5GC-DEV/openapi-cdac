@@ -26,8 +26,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/omec-project/openapi/v2"
-	"github.com/omec-project/openapi/v2/models"
+	"github.com/5GC-DEV/openapi-cdac/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 type NFInstancesStoreAPI interface {
@@ -1742,8 +1742,6 @@ func (a *NFInstancesStoreAPIService) SearchNFInstancesExecute(r ApiSearchNFInsta
 		fmt.Printf("PrepareRequest failed: %+v", err)
 		return localVarReturnValue, nil, err
 	}
-
-	fmt.Printf("Sending NRF request: method=%s url=%s", r.Method, r.URL.String())
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {

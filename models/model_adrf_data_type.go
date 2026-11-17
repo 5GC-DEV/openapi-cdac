@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AdrfDataType Represents a type of data that is stored in the ADRF. Possible values are: - HISTORICAL_ANALYTICS: Indicates that historical analytics are stored in the ADRF. - HISTORICAL_DATA: Indicates that historical data are stored in the ADRF.

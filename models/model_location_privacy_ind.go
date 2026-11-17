@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // LocationPrivacyInd Indicates one of the mutually exclusive global settings (if the location is allowed or disallowed).

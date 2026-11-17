@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // AccessNetworkId Indicates the contents of Access Network ID. Used in the derivation of authentication vectors in EAP-AKA.

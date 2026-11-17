@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // CollectiveBehaviourFilterType Represents the parameter type for collective behaviour information filtering. Possible values are: - COLLECTIVE_ATTRIBUTE: Indicates that the parameter type is collective attributes. - DATA_PROCESSING: Indicates that the parameter type is data processing.

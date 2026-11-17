@@ -21,7 +21,7 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // DataCollectionPurpose Represents the purpose for data collection. Possible values are: - ANALYTICS_GENERATION: The data is collected for generating the analytics. - MODEL_TRAINING: The data is collected for ML model training.

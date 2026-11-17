@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // ResourceStatus Status of SM context or PDU session resource. Possible values are - RELEASED - UNCHANGED - TRANSFERRED - UPDATED - ALT_ANCHOR_SMF

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // PreemptionControlInformationRm This data type is defined in the same way as the PreemptionControlInformation data type, but with the OpenAPI nullable property set to true.

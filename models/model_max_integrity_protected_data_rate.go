@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // MaxIntegrityProtectedDataRate Maximum Integrity Protected Data Rate. Possible values are   - 64_KBPS   - MAX_UE_RATE

@@ -6,8 +6,8 @@ package utils
 import (
 	"net/http"
 
-	openapi "github.com/omec-project/openapi/v2"
-	"github.com/omec-project/openapi/v2/models"
+	openapi "github.com/5GC-DEV/openapi-cdac/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2/models"
 )
 
 // Problem detail cause constants

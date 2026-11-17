@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // TermCause Represents the cause for the analytics subscription termination request. Possible values are:   - USER_CONSENT_REVOKED: The user consent has been revoked.   - NWDAF_OVERLOAD: The NWDAF is overloaded.   - UE_LEFT_AREA: The UE has moved out of the NWDAF serving area.

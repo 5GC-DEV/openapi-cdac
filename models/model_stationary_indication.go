@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // StationaryIndication Possible values are: - STATIONARY: Identifies the UE is stationary - MOBILE: Identifies the UE is mobile

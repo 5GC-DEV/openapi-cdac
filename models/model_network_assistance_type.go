@@ -21,7 +21,7 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // NetworkAssistanceType The type of network assistance sought by the Media Session Handler.

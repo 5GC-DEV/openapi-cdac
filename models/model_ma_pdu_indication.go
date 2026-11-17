@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/omec-project/openapi/v2"
+	"github.com/5GC-DEV/openapi-cdac/v2"
 )
 
 // MaPduIndication Contains the MA PDU session indication, i.e., MA PDU Request or MA PDU Network-Upgrade Allowed.
